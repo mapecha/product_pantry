@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Check, X } from 'lucide-react';
+import { Check, X, ChevronDown, ChevronRight } from 'lucide-react';
 import { Product } from '../types/Product';
 import { fieldGroups } from '../data/fieldGroups';
 import { RejectModal } from './RejectModal';
@@ -18,6 +18,8 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
     productId: '',
     productName: ''
   });
+
+  const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
 
   const handleApprove = (productId: string, productName: string) => {
     console.log(`[TESTING] Approved product: ${productName} (${productId})`);
@@ -56,14 +58,43 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
     return String(value || '-');
   };
 
+  const toggleSection = (sectionTitle: string) => {
+    setCollapsedSections(prev => ({
+      ...prev,
+      [sectionTitle]: !prev[sectionTitle]
+    }));
+  };
+
   return (
     <div className="w-full h-screen bg-gray-50">
       <div className="p-6">
-        <div className="flex items-center space-x-3 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900">Kontrola produktů</h1>
-          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
-            🚀 Testing Version v2.0
-          </span>
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center space-x-3">
+            <h1 className="text-2xl font-bold text-gray-900">Kontrola produktů</h1>
+            <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+              🚀 Testing Version v2.0
+            </span>
+          </div>
+          <div className="flex space-x-2">
+            <button
+              onClick={() => setCollapsedSections({})}
+              className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+            >
+              Expand All
+            </button>
+            <button
+              onClick={() => {
+                const allCollapsed = fieldGroups.reduce((acc, group) => ({
+                  ...acc,
+                  [group.title]: true
+                }), {});
+                setCollapsedSections(allCollapsed);
+              }}
+              className="px-3 py-1 text-xs bg-gray-200 hover:bg-gray-300 text-gray-700 rounded transition-colors"
+            >
+              Collapse All
+            </button>
+          </div>
         </div>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
@@ -99,12 +130,20 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                       {/* Section Header */}
                       <tr className="bg-gradient-to-r from-blue-50 to-indigo-50 border-t-2 border-blue-200">
                         <td className="sticky left-0 z-10 px-6 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-r border-gray-200">
-                          <div className="flex items-center space-x-2">
+                          <button 
+                            className="flex items-center space-x-2 w-full text-left hover:bg-blue-100 p-2 rounded transition-colors"
+                            onClick={() => toggleSection(group.title)}
+                          >
+                            {collapsedSections[group.title] ? (
+                              <ChevronRight className="w-4 h-4 text-blue-700" />
+                            ) : (
+                              <ChevronDown className="w-4 h-4 text-blue-700" />
+                            )}
                             <span className="text-lg">{group.emoji}</span>
                             <span className="font-bold text-sm text-blue-900 uppercase tracking-wide">
                               {group.title}
                             </span>
-                          </div>
+                          </button>
                         </td>
                         {products.map((product) => (
                           <td
@@ -115,7 +154,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                       </tr>
                       
                       {/* Section Fields */}
-                      {group.fields.map((field, fieldIndex) => (
+                      {!collapsedSections[group.title] && group.fields.map((field, fieldIndex) => (
                         <tr
                           key={`${group.title}-${field.key}`}
                           className={`hover:bg-gray-50 transition-colors ${
