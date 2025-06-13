@@ -1,12 +1,18 @@
 import React from 'react';
-import { ProductTable } from './components/ProductTable';
-import { products } from './data/products';
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { SupplierPortal } from './components/SupplierPortal';
+import { ProductDetailPage } from './components/ProductDetailPage';
 
 function App() {
   return (
-    <div className="min-h-screen bg-gray-50">
-      <ProductTable products={products} />
-    </div>
+    <Router>
+      <div className="App">
+        <Routes>
+          <Route path="/" element={<SupplierPortal />} />
+          <Route path="/product-pantry/:supplierId" element={<ProductDetailPage />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
 
