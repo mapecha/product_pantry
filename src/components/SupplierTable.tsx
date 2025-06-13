@@ -154,97 +154,98 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
                 </th>
               </tr>
             </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {currentSuppliers.map((supplier) => (
-              <tr
-                key={supplier.id}
-                onClick={() => onRowClick(supplier.id)}
-                className="hover:bg-gray-50 cursor-pointer transition-colors"
-              >
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  <div className="flex items-center">
-                    <div>
-                      <div className="font-medium">{supplier.supplier}</div>
-                      <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+            <tbody className="bg-white divide-y divide-gray-200">
+              {currentSuppliers.map((supplier) => (
+                <tr
+                  key={supplier.id}
+                  onClick={() => onRowClick(supplier.id)}
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                >
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                    <div className="flex items-center">
+                      <div>
+                        <div className="font-medium">{supplier.supplier}</div>
+                        <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                      </div>
                     </div>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div className="flex items-center">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                      {supplier.skuCount} SKU
-                    </span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="w-4 h-4 text-gray-400" />
-                    <span>{supplier.changeDate}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  <div className="flex items-center space-x-1">
-                    <User className="w-4 h-4 text-gray-400" />
-                    <span className="font-medium">{supplier.odpovědnyUzivatel || '-'}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {renderHints(supplier.hasHints)}
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {renderActions(supplier)}
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-
-      {/* Pagination */}
-      <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
-        <div className="flex items-center space-x-4">
-          <div className="flex items-center space-x-2">
-            <span className="text-sm text-gray-700">Rows per page:</span>
-            <select
-              value={rowsPerPage}
-              onChange={(e) => {
-                setRowsPerPage(Number(e.target.value));
-                setCurrentPage(1);
-              }}
-              className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
-            >
-              <option value={10}>10</option>
-              <option value={20}>20</option>
-              <option value={50}>50</option>
-              <option value={100}>100</option>
-            </select>
-          </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div className="flex items-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                        {supplier.skuCount} SKU
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div className="flex items-center space-x-1">
+                      <Calendar className="w-4 h-4 text-gray-400" />
+                      <span>{supplier.changeDate}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    <div className="flex items-center space-x-1">
+                      <User className="w-4 h-4 text-gray-400" />
+                      <span className="font-medium">{supplier.odpovědnyUzivatel || '-'}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {renderHints(supplier.hasHints)}
+                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                    {renderActions(supplier)}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
         </div>
 
-        <div className="flex items-center space-x-4">
-          <span className="text-sm text-gray-700">
-            {startIndex + 1}-{Math.min(endIndex, filteredSuppliers.length)} of {filteredSuppliers.length}
-            {filteredSuppliers.length !== suppliers.length && ` (${suppliers.length} celkem)`}
-          </span>
-          
-          <div className="flex items-center space-x-1">
-            <button
-              onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-              disabled={currentPage === 1}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronLeft className="w-5 h-5" />
-            </button>
-            <button
-              onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-              disabled={currentPage === totalPages}
-              className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              <ChevronRight className="w-5 h-5" />
-            </button>
+        {/* Pagination */}
+        <div className="bg-white px-6 py-3 flex items-center justify-between border-t border-gray-200">
+          <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2">
+              <span className="text-sm text-gray-700">Rows per page:</span>
+              <select
+                value={rowsPerPage}
+                onChange={(e) => {
+                  setRowsPerPage(Number(e.target.value));
+                  setCurrentPage(1);
+                }}
+                className="border border-gray-300 rounded px-2 py-1 text-sm focus:outline-none focus:ring-2 focus:ring-green-500"
+              >
+                <option value={10}>10</option>
+                <option value={20}>20</option>
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="flex items-center space-x-4">
+            <span className="text-sm text-gray-700">
+              {startIndex + 1}-{Math.min(endIndex, filteredSuppliers.length)} of {filteredSuppliers.length}
+              {filteredSuppliers.length !== suppliers.length && ` (${suppliers.length} celkem)`}
+            </span>
+            
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                disabled={currentPage === 1}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronLeft className="w-5 h-5" />
+              </button>
+              <button
+                onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                disabled={currentPage === totalPages}
+                className="p-1 text-gray-400 hover:text-gray-600 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                <ChevronRight className="w-5 h-5" />
+              </button>
+            </div>
           </div>
         </div>
       </div>
     </div>
   );
-}; 
+};
