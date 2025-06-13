@@ -20,11 +20,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
   });
 
   const handleApprove = (productId: string, productName: string) => {
-    console.log(`Approved product: ${productName} (${productId})`);
+    console.log(`[TESTING] Approved product: ${productName} (${productId})`);
+    alert(`🧪 Testing Mode: Would approve "${productName}"`);
     // Here you would typically make an API call
   };
 
   const handleReject = (productId: string, productName: string) => {
+    console.log(`[TESTING] Rejecting product: ${productName} (${productId})`);
     setRejectModal({
       isOpen: true,
       productId,
@@ -57,7 +59,12 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
   return (
     <div className="w-full h-screen bg-gray-50">
       <div className="p-6">
-        <h1 className="text-2xl font-bold text-gray-900 mb-6">Kontrola produktů</h1>
+        <div className="flex items-center space-x-3 mb-6">
+          <h1 className="text-2xl font-bold text-gray-900">Kontrola produktů</h1>
+          <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+            🚀 Testing Version v2.0
+          </span>
+        </div>
         
         <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
           <div className="overflow-x-auto">
@@ -115,7 +122,9 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                             fieldIndex % 2 === 0 ? 'bg-white' : 'bg-gray-25'
                           }`}
                         >
-                          <td className="sticky left-0 z-10 px-6 py-3 bg-inherit border-r border-gray-200">
+                          <td className={`sticky left-0 z-10 px-6 py-3 border-r border-gray-200 ${
+                            fieldIndex % 2 === 0 ? 'bg-white' : 'bg-gray-50'
+                          }`}>
                             <div className="text-sm font-medium text-gray-900">
                               {field.label}
                             </div>
