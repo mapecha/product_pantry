@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { Eye, Check, X, ChevronLeft, ChevronRight } from 'lucide-react';
-import { SupplierEntry } from '../types/Supplier';
+import { Eye, Check, X, ChevronLeft, ChevronRight, User, Calendar } from 'lucide-react';
+import { SupplierEntry, SupplierFilters } from '../types/Supplier';
+import { SupplierFiltersComponent } from './SupplierFilters';
 
 interface SupplierTableProps {
   suppliers: SupplierEntry[];
@@ -8,6 +9,8 @@ interface SupplierTableProps {
   onView: (supplierId: string) => void;
   onApprove: (supplierId: string) => void;
   onReject: (supplierId: string) => void;
+  filters: SupplierFilters;
+  onFiltersChange: (filters: SupplierFilters) => void;
 }
 
 export const SupplierTable: React.FC<SupplierTableProps> = ({
@@ -15,15 +18,48 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
   onRowClick,
   onView,
   onApprove,
-  onReject
+  onReject,
+  filters,
+  onFiltersChange
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
 
-  const totalPages = Math.ceil(suppliers.length / rowsPerPage);
+  // Get unique users for filter dropdown
+  const availableUsers = Array.from(new Set(suppliers.map(s => s.odpovědnyUzivatel).filter(Boolean))).sort();
+
+  // Apply filters
+  const filteredSuppliers = suppliers.filter(supplier => {
+    // Supplier name filter
+    if (filters.supplierName && !supplier.supplier.toLowerCase().includes(filters.supplierName.toLowerCase())) {
+      return false;
+    }
+
+    // Responsible user filter
+    if (filters.odpovědnyUzivatel && supplier.odpovědnyUzivatel !== filters.odpovědnyUzivatel) {
+      return false;
+    }
+
+    // Date range filter (using changeDate)
+    if (filters.dateFrom && supplier.changeDate < filters.dateFrom) {
+      return false;
+    }
+    if (filters.dateTo && supplier.changeDate > filters.dateTo) {
+      return false;
+    }
+
+    // Hide processed filter
+    if (filters.hideProcessed && supplier.status === 'processed') {
+      return false;
+    }
+
+    return true;
+  });
+
+  const totalPages = Math.ceil(filteredSuppliers.length / rowsPerPage);
   const startIndex = (currentPage - 1) * rowsPerPage;
   const endIndex = startIndex + rowsPerPage;
-  const currentSuppliers = suppliers.slice(startIndex, endIndex);
+  const currentSuppliers = filteredSuppliers.slice(startIndex, endIndex);
 
   const handleActionClick = (e: React.MouseEvent, action: () => void) => {
     e.stopPropagation(); // Prevent row click when clicking action buttons
@@ -68,29 +104,56 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
   );
 
   return (
-    <div className="bg-white">
-      {/* Table */}
-      <div className="overflow-hidden border border-gray-200 rounded-lg">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Supplier
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                #SKU
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Date
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Hints
-              </th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                Actions
-              </th>
-            </tr>
-          </thead>
+    <div>
+      {/* Filters */}
+      <SupplierFiltersComponent
+        filters={filters}
+        onFiltersChange={onFiltersChange}
+        availableUsers={availableUsers}
+      />
+
+      {/* Results Summary */}
+      <div className="mb-4 text-sm text-gray-600">
+        Zobrazeno {currentSuppliers.length} z {filteredSuppliers.length} dodavatelů
+        {filteredSuppliers.length !== suppliers.length && ` (celkem ${suppliers.length})`}
+      </div>
+
+      <div className="bg-white">
+        {/* Table */}
+        <div className="overflow-hidden border border-gray-200 rounded-lg">
+          <table className="min-w-full divide-y divide-gray-200">
+            <thead className="bg-gray-50">
+              <tr>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <span>Název dodavatele</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <span>#SKU</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-4 h-4" />
+                    <span>Datum změny</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <div className="flex items-center space-x-1">
+                    <User className="w-4 h-4" />
+                    <span>Odpovědný uživatel</span>
+                  </div>
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Hints
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Actions
+                </th>
+              </tr>
+            </thead>
           <tbody className="bg-white divide-y divide-gray-200">
             {currentSuppliers.map((supplier) => (
               <tr
@@ -99,13 +162,31 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
                 className="hover:bg-gray-50 cursor-pointer transition-colors"
               >
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {supplier.supplier}
+                  <div className="flex items-center">
+                    <div>
+                      <div className="font-medium">{supplier.supplier}</div>
+                      <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                    </div>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {supplier.skuCount}
+                  <div className="flex items-center">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                      {supplier.skuCount} SKU
+                    </span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                  {supplier.date}
+                  <div className="flex items-center space-x-1">
+                    <Calendar className="w-4 h-4 text-gray-400" />
+                    <span>{supplier.changeDate}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                  <div className="flex items-center space-x-1">
+                    <User className="w-4 h-4 text-gray-400" />
+                    <span className="font-medium">{supplier.odpovědnyUzivatel || '-'}</span>
+                  </div>
                 </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                   {renderHints(supplier.hasHints)}
@@ -142,7 +223,8 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
 
         <div className="flex items-center space-x-4">
           <span className="text-sm text-gray-700">
-            {startIndex + 1}-{Math.min(endIndex, suppliers.length)} of {suppliers.length}
+            {startIndex + 1}-{Math.min(endIndex, filteredSuppliers.length)} of {filteredSuppliers.length}
+            {filteredSuppliers.length !== suppliers.length && ` (${suppliers.length} celkem)`}
           </span>
           
           <div className="flex items-center space-x-1">

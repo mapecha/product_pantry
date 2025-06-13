@@ -6,9 +6,14 @@ import { RejectModal } from './RejectModal';
 
 interface ProductTableProps {
   products: Product[];
+  supplierFilters?: {
+    odpovědnyUzivatel: string;
+    dateFrom: string;
+    dateTo: string;
+  };
 }
 
-export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
+export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFilters }) => {
   const [rejectModal, setRejectModal] = useState<{
     isOpen: boolean;
     productId: string;
@@ -85,6 +90,26 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
     }));
   };
 
+  // Filter products based on supplier filters
+  const filteredProducts = products.filter(product => {
+    if (!supplierFilters) return true;
+
+    // Filter by responsible user
+    if (supplierFilters.odpovědnyUzivatel && product.odpovědnyUzivatel !== supplierFilters.odpovědnyUzivatel) {
+      return false;
+    }
+
+    // Filter by date range (using vytvoreno field)
+    if (supplierFilters.dateFrom && product.vytvoreno < supplierFilters.dateFrom) {
+      return false;
+    }
+    if (supplierFilters.dateTo && product.vytvoreno > supplierFilters.dateTo) {
+      return false;
+    }
+
+    return true;
+  });
+
   return (
     <div className="w-full h-screen bg-gray-50">
       <div className="p-6">
@@ -94,6 +119,11 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
             <span className="bg-blue-100 text-blue-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
               🚀 Testing Version v2.0
             </span>
+            {supplierFilters && (supplierFilters.odpovědnyUzivatel || supplierFilters.dateFrom || supplierFilters.dateTo) && (
+              <span className="bg-yellow-100 text-yellow-800 text-xs font-semibold px-2.5 py-0.5 rounded-full">
+                📋 Filtered ({filteredProducts.length}/{products.length})
+              </span>
+            )}
           </div>
           <div className="flex items-center space-x-4">
             {/* View Switcher */}
@@ -158,7 +188,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                 </button>
                 <button
                   onClick={() => {
-                    const allProductsCollapsed = products.reduce((acc, product) => ({
+                    const allProductsCollapsed = filteredProducts.reduce((acc, product) => ({
                       ...acc,
                       [product.id]: true
                     }), {});
@@ -185,7 +215,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                     <th className="sticky left-0 z-20 bg-gray-50 px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-64">
                       Pole
                     </th>
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <th
                         key={product.id}
                         className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider border-r border-gray-200 w-80"
@@ -224,7 +254,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                             </span>
                           </button>
                         </td>
-                        {products.map((product) => (
+                        {filteredProducts.map((product) => (
                           <td
                             key={product.id}
                             className="px-4 py-4 bg-gradient-to-r from-blue-50 to-indigo-50 border-r border-gray-200"
@@ -247,7 +277,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                               {field.label}
                             </div>
                           </td>
-                          {products.map((product) => (
+                          {filteredProducts.map((product) => (
                             <td
                               key={product.id}
                               className="px-4 py-3 text-sm text-gray-700 border-r border-gray-200"
@@ -272,7 +302,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
                         ⚡ AKCE
                       </div>
                     </td>
-                    {products.map((product) => (
+                    {filteredProducts.map((product) => (
                       <td key={product.id} className="px-4 py-4 border-r border-gray-200">
                         <div className="flex space-x-2">
                           <button
@@ -303,7 +333,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products }) => {
         {/* Product View */}
         {viewMode === 'products' && (
           <div className="space-y-6">
-            {products.map((product) => (
+            {filteredProducts.map((product) => (
               <div key={product.id} className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
                 {/* Product Header */}
                 <div className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
