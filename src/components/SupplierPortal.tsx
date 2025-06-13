@@ -1,7 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Navigation } from './Navigation';
-import { SearchFilters } from './SearchFilters';
 import { SupplierTable } from './SupplierTable';
 import { suppliers } from '../data/suppliers';
 import { SupplierFilters } from '../types/Supplier';
@@ -11,23 +10,14 @@ export const SupplierPortal: React.FC = () => {
   const [activeTab, setActiveTab] = useState('pantry-signoff');
   const [filters, setFilters] = useState<SupplierFilters>({
     supplierName: '',
-    hideProcessed: true
+    hideProcessed: true,
+    odpovědnyUzivatel: '',
+    dateFrom: '',
+    dateTo: ''
   });
 
-  // Filter suppliers based on search criteria
-  const filteredSuppliers = useMemo(() => {
-    return suppliers.filter((supplier) => {
-      const matchesName = supplier.supplier
-        .toLowerCase()
-        .includes(filters.supplierName.toLowerCase());
-      
-      const matchesProcessed = filters.hideProcessed 
-        ? supplier.status !== 'processed'
-        : true;
-
-      return matchesName && matchesProcessed;
-    });
-  }, [filters]);
+  // Filter suppliers based on search criteria - this filtering is now handled inside SupplierTable
+  const filteredSuppliers = suppliers;
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
@@ -60,8 +50,6 @@ export const SupplierPortal: React.FC = () => {
       case 'pantry-signoff':
         return (
           <div className="max-w-7xl mx-auto">
-            <SearchFilters filters={filters} onFiltersChange={setFilters} />
-            
             <div className="px-6 py-6">
               <SupplierTable
                 suppliers={filteredSuppliers}
@@ -69,6 +57,8 @@ export const SupplierPortal: React.FC = () => {
                 onView={handleView}
                 onApprove={handleApprove}
                 onReject={handleReject}
+                filters={filters}
+                onFiltersChange={setFilters}
               />
             </div>
           </div>
