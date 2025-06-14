@@ -3,6 +3,9 @@ import { Check, X, ChevronDown, ChevronRight, Table, Grid } from 'lucide-react';
 import { Product } from '../types/Product';
 import { fieldGroups } from '../data/fieldGroups';
 import { RejectModal } from './RejectModal';
+import { WorkflowState } from '../types/Workflow';
+import { useNavigate } from 'react-router-dom';
+import { queueService } from '../services/queueService';
 
 interface ProductTableProps {
   products: Product[];
@@ -14,6 +17,7 @@ interface ProductTableProps {
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFilters }) => {
+  const navigate = useNavigate();
   const [rejectModal, setRejectModal] = useState<{
     isOpen: boolean;
     productId: string;
@@ -31,8 +35,19 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFi
 
   const handleApprove = (productId: string, productName: string) => {
     console.log(`[TESTING] Approved product: ${productName} (${productId})`);
-    alert(`🧪 Testing Mode: Would approve "${productName}"`);
-    // Here you would typically make an API call
+    
+    // Add to queue using the queue service
+    queueService.addToQueue({
+      productId,
+      productName,
+      supplier: 'Fresh Foods Ltd', // In real app, would come from product data
+      approvedBy: 'current-user' // Would come from auth context
+    });
+    
+    alert(`✅ Product "${productName}" approved and moved to capacity queue`);
+    
+    // Navigate to commercial dashboard queue view
+    navigate('/commercial/queue');
   };
 
   const handleReject = (productId: string, productName: string) => {
