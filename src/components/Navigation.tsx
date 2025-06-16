@@ -1,5 +1,6 @@
 import React from 'react';
-import { User, Globe } from 'lucide-react';
+import { User, Globe, Package, Truck } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
 
 interface NavigationProps {
   activeTab: string;
@@ -7,6 +8,8 @@ interface NavigationProps {
 }
 
 export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }) => {
+  const location = useLocation();
+  
   const tabs = [
     { id: 'reservation', label: 'RESERVATION' },
     { id: 'performance', label: 'PERFORMANCE OVERVIEW' },
@@ -51,6 +54,19 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
               {tab.label}
             </button>
           ))}
+          
+          {/* SKU Management Link */}
+          <Link
+            to="/sku-management"
+            className={`py-4 px-1 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
+              location.pathname === '/sku-management'
+                ? 'text-green-600 border-b-2 border-green-600'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Truck className="w-4 h-4" />
+            <span>SKU MANAGEMENT</span>
+          </Link>
         </nav>
       </div>
     </div>
