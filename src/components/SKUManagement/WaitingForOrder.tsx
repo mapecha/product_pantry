@@ -1,12 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MapPin, ArrowLeft, CheckCircle, Warehouse } from 'lucide-react';
+import { Package, ArrowLeft, CheckCircle, ShoppingCart } from 'lucide-react';
 import { skuService } from '../../services/skuService';
 import { SKU, SKUState } from '../../types/SKUManagement';
 
-export const WarehouseAssignment: React.FC = () => {
-  const [assignmentSKUs, setAssignmentSKUs] = useState<SKU[]>([]);
-  const [selectedSKU, setSelectedSKU] = useState<SKU | null>(null);
-  const [warehousePosition, setWarehousePosition] = useState('');
+export const WaitingForOrder: React.FC = () => {
+  const [waitingForOrderSKUs, setWaitingForOrderSKUs] = useState<SKU[]>([]);
   const [moveBackwardModal, setMoveBackwardModal] = useState<{
     isOpen: boolean;
     sku: SKU | null;
@@ -20,15 +18,7 @@ export const WarehouseAssignment: React.FC = () => {
   }, []);
 
   const loadSKUs = () => {
-    setAssignmentSKUs(skuService.getSKUs(SKUState.ASSIGN_WAREHOUSE_POSITION));
-  };
-
-  const handleAssignPosition = () => {
-    if (selectedSKU && warehousePosition) {
-      skuService.assignWarehousePosition(selectedSKU.id, warehousePosition, 'current-user');
-      setSelectedSKU(null);
-      setWarehousePosition('');
-    }
+    setWaitingForOrderSKUs(skuService.getSKUs(SKUState.WAITING_FOR_ORDER));
   };
 
   const handleMoveBackward = () => {
@@ -51,9 +41,9 @@ export const WarehouseAssignment: React.FC = () => {
   return (
     <div>
       <div className="mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">Warehouse Assignment</h2>
+        <h2 className="text-xl font-semibold text-gray-900">Waiting for Order</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Assign warehouse positions to SKUs awaiting placement.
+          SKUs that have been assigned warehouse positions and are ready for ordering.
         </p>
       </div>
 
@@ -61,111 +51,96 @@ export const WarehouseAssignment: React.FC = () => {
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center">
-            <MapPin className="h-10 w-10 text-orange-500 mr-3" />
-            <div>
-              <p className="text-sm text-gray-600">Awaiting Position</p>
-              <p className="text-2xl font-bold text-gray-900">{assignmentSKUs.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <Warehouse className="h-10 w-10 text-blue-500 mr-3" />
-            <div>
-              <p className="text-sm text-gray-600">Assigned Today</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
             <CheckCircle className="h-10 w-10 text-green-500 mr-3" />
             <div>
-              <p className="text-sm text-gray-600">Completion Rate</p>
-              <p className="text-2xl font-bold text-gray-900">94%</p>
+              <p className="text-sm text-gray-600">Ready for Order</p>
+              <p className="text-2xl font-bold text-gray-900">{waitingForOrderSKUs.length}</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex items-center">
+            <ShoppingCart className="h-10 w-10 text-blue-500 mr-3" />
+            <div>
+              <p className="text-sm text-gray-600">Orders Today</p>
+              <p className="text-2xl font-bold text-gray-900">8</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-white rounded-lg shadow p-4">
+          <div className="flex items-center">
+            <Package className="h-10 w-10 text-purple-500 mr-3" />
+            <div>
+              <p className="text-sm text-gray-600">Avg. Lead Time</p>
+              <p className="text-2xl font-bold text-gray-900">3.2 days</p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* SKUs Awaiting Position Assignment */}
+      {/* SKUs Ready for Order */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">Awaiting Position Assignment</h3>
+          <h3 className="text-lg font-medium text-gray-900">SKUs Ready for Order</h3>
         </div>
         
-        {assignmentSKUs.length === 0 ? (
+        {waitingForOrderSKUs.length === 0 ? (
           <div className="p-8 text-center text-gray-500">
-            <MapPin className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-            <p>No SKUs awaiting position assignment</p>
+            <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+            <p>No SKUs waiting for order</p>
           </div>
         ) : (
           <div className="p-4 space-y-2">
-            {assignmentSKUs.map((sku) => (
+            {waitingForOrderSKUs.map((sku) => (
               <div
                 key={sku.id}
-                onClick={() => setSelectedSKU(sku)}
-                className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                  selectedSKU?.id === sku.id
-                    ? 'border-blue-500 bg-blue-50'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
+                className="border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
               >
                 <div className="flex items-center justify-between">
-                  <div>
+                  <div className="flex-1">
                     <h4 className="text-sm font-medium text-gray-900">
                       {sku.productName}
                     </h4>
-                    <p className="text-xs text-gray-500">
+                    <p className="text-xs text-gray-500 mt-1">
                       {sku.supplier} • {sku.warehouse?.name}
                     </p>
                     <p className="text-xs text-gray-500 mt-1">
-                      SKU: {sku.id}
+                      SKU: <span className="font-mono">{sku.id}</span> • 
+                      Position: <span className="font-mono font-medium">{sku.warehouse?.position}</span>
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Assigned: {sku.warehouse?.assignedAt && formatDate(sku.warehouse.assignedAt)}
                     </p>
                   </div>
-                  <div className="flex flex-col items-end space-y-1">
-                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                      Assign Position
+                  
+                  <div className="flex flex-col items-end space-y-2">
+                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                      <CheckCircle className="w-3 h-3 mr-1" />
+                      Ready for Order
                     </span>
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setMoveBackwardModal({ isOpen: true, sku, reason: '' });
-                      }}
-                      className="text-xs text-gray-500 hover:text-red-600"
-                    >
-                      <ArrowLeft className="w-3 h-3 inline mr-1" />
-                      Move Back
-                    </button>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => alert('Order creation functionality would be implemented here')}
+                        className="px-3 py-1 bg-blue-600 text-white text-xs font-medium rounded hover:bg-blue-700"
+                      >
+                        Create Order
+                      </button>
+                      <button
+                        onClick={() => setMoveBackwardModal({ 
+                          isOpen: true, 
+                          sku, 
+                          reason: '' 
+                        })}
+                        className="px-2 py-1 text-xs text-gray-500 hover:text-red-600 border border-gray-300 rounded hover:border-red-300"
+                      >
+                        <ArrowLeft className="w-3 h-3 inline mr-1" />
+                        Move Back
+                      </button>
+                    </div>
                   </div>
                 </div>
               </div>
             ))}
-          </div>
-        )}
-        
-        {/* Position Assignment Form */}
-        {selectedSKU && (
-          <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-            <h4 className="text-sm font-medium text-gray-900 mb-2">
-              Assign Position for: {selectedSKU.productName}
-            </h4>
-            <div className="flex space-x-2">
-              <input
-                type="text"
-                value={warehousePosition}
-                onChange={(e) => setWarehousePosition(e.target.value)}
-                placeholder="e.g., A01-1-1"
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-              />
-              <button
-                onClick={handleAssignPosition}
-                disabled={!warehousePosition}
-                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
-              >
-                Assign
-              </button>
-            </div>
           </div>
         )}
       </div>
@@ -178,7 +153,7 @@ export const WarehouseAssignment: React.FC = () => {
               Move SKU Backward
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Move "{moveBackwardModal.sku?.productName}" back to the previous state.
+              Move "{moveBackwardModal.sku?.productName}" back to warehouse assignment.
             </p>
             <textarea
               value={moveBackwardModal.reason}
@@ -208,4 +183,4 @@ export const WarehouseAssignment: React.FC = () => {
       )}
     </div>
   );
-};
+}; 

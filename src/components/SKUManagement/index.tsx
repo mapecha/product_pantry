@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { Package, AlertTriangle, Clock, MapPin, X, ArrowUpDown, History, Users, Warehouse } from 'lucide-react';
+import { Package, AlertTriangle, Clock, MapPin, X, ArrowUpDown, History, Users, Warehouse, ShoppingCart } from 'lucide-react';
 import { skuService } from '../../services/skuService';
 import { SKU, SKUState } from '../../types/SKUManagement';
 import { CapacityQueue } from './CapacityQueue';
 import { WarehouseAssignment } from './WarehouseAssignment';
+import { WaitingForOrder } from './WaitingForOrder';
 import { AuditHistory } from './AuditHistory';
 
-type View = 'commercial' | 'stock-planner' | 'history';
+type View = 'commercial' | 'stock-planner' | 'waiting-for-order' | 'history';
 
 export const SKUManagement: React.FC = () => {
   const [view, setView] = useState<View>('commercial');
@@ -28,6 +29,8 @@ export const SKUManagement: React.FC = () => {
         return <CapacityQueue />;
       case 'stock-planner':
         return <WarehouseAssignment />;
+      case 'waiting-for-order':
+        return <WaitingForOrder />;
       case 'history':
         return <AuditHistory />;
       default:
@@ -94,6 +97,17 @@ export const SKUManagement: React.FC = () => {
             >
               <Warehouse className="w-4 h-4" />
               <span>Warehouse Assignment</span>
+            </button>
+            <button
+              onClick={() => setView('waiting-for-order')}
+              className={`py-4 px-1 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
+                view === 'waiting-for-order'
+                  ? 'text-green-600 border-b-2 border-green-600'
+                  : 'text-gray-500 hover:text-gray-700'
+              }`}
+            >
+              <ShoppingCart className="w-4 h-4" />
+              <span>Waiting for Order</span>
             </button>
             <button
               onClick={() => setView('history')}
