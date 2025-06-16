@@ -10,8 +10,8 @@ function App() {
       <div className="App">
         <Routes>
           <Route path="/" element={<SupplierPortal />} />
+          <Route path="/sku-management" element={<SupplierPortal />} />
           <Route path="/product-pantry/:supplierId" element={<ProductDetailPage />} />
-          <Route path="/sku-management" element={<SKUManagement />} />
         </Routes>
       </div>
     </Router>

@@ -15,7 +15,8 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
     { id: 'performance', label: 'PERFORMANCE OVERVIEW' },
     { id: 'administration', label: 'ADMINISTRATION' },
     { id: 'product-pantry', label: 'PRODUCT PANTRY' },
-    { id: 'pantry-signoff', label: 'PANTRY SIGN-OFF' }
+    { id: 'pantry-signoff', label: 'PANTRY SIGN-OFF' },
+    { id: 'sku-management', label: 'SKU MANAGEMENT', icon: <Truck className="w-4 h-4" /> }
   ];
 
   return (
@@ -45,28 +46,16 @@ export const Navigation: React.FC<NavigationProps> = ({ activeTab, onTabChange }
             <button
               key={tab.id}
               onClick={() => onTabChange(tab.id)}
-              className={`py-4 px-1 text-sm font-medium transition-colors relative ${
+              className={`py-4 px-1 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
                 activeTab === tab.id
                   ? 'text-green-600 border-b-2 border-green-600'
                   : 'text-gray-500 hover:text-gray-700'
               }`}
             >
-              {tab.label}
+              {tab.icon && <span>{tab.icon}</span>}
+              <span>{tab.label}</span>
             </button>
           ))}
-          
-          {/* SKU Management Link */}
-          <Link
-            to="/sku-management"
-            className={`py-4 px-1 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
-              location.pathname === '/sku-management'
-                ? 'text-green-600 border-b-2 border-green-600'
-                : 'text-gray-500 hover:text-gray-700'
-            }`}
-          >
-            <Truck className="w-4 h-4" />
-            <span>SKU MANAGEMENT</span>
-          </Link>
         </nav>
       </div>
     </div>

@@ -1,13 +1,21 @@
 import React, { useState, useMemo } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { Navigation } from './Navigation';
 import { SupplierTable } from './SupplierTable';
+import { SKUManagement } from './SKUManagement';
 import { suppliers } from '../data/suppliers';
 import { SupplierFilters } from '../types/Supplier';
 
 export const SupplierPortal: React.FC = () => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState('pantry-signoff');
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    // Set initial tab based on current path
+    if (location.pathname === '/sku-management') {
+      return 'sku-management';
+    }
+    return 'pantry-signoff';
+  });
   const [filters, setFilters] = useState<SupplierFilters>({
     supplierName: '',
     hideProcessed: true,
@@ -21,6 +29,12 @@ export const SupplierPortal: React.FC = () => {
 
   const handleTabChange = (tab: string) => {
     setActiveTab(tab);
+    // Update URL for SKU Management tab
+    if (tab === 'sku-management') {
+      navigate('/sku-management');
+    } else {
+      navigate('/');
+    }
   };
 
   const handleRowClick = (supplierId: string) => {
@@ -103,6 +117,9 @@ export const SupplierPortal: React.FC = () => {
             </div>
           </div>
         );
+      
+      case 'sku-management':
+        return <SKUManagement />;
       
       default:
         return (

@@ -40,32 +40,30 @@ export const SKUManagement: React.FC = () => {
   const readyCount = skus.filter(s => s.state === SKUState.WAITING_FOR_ORDER).length;
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div>
       {/* Header */}
-      <div className="bg-white shadow">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex justify-between items-center">
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900">SKU Management</h1>
-              <p className="mt-1 text-sm text-gray-600">
-                Manage approved products through warehouse assignment to ready-for-order status
-              </p>
+      <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="flex justify-between items-center">
+          <div>
+            <h1 className="text-2xl font-bold text-gray-900">SKU Management</h1>
+            <p className="mt-1 text-sm text-gray-600">
+              Manage approved products through warehouse assignment to ready-for-order status
+            </p>
+          </div>
+          
+          {/* Quick Stats */}
+          <div className="flex space-x-6">
+            <div className="text-center">
+              <div className="text-2xl font-bold text-blue-600">{waitingCount}</div>
+              <div className="text-xs text-gray-500">Waiting</div>
             </div>
-            
-            {/* Quick Stats */}
-            <div className="flex space-x-6">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-blue-600">{waitingCount}</div>
-                <div className="text-xs text-gray-500">Waiting</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-orange-600">{assignmentCount}</div>
-                <div className="text-xs text-gray-500">Assigning</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-green-600">{readyCount}</div>
-                <div className="text-xs text-gray-500">Ready</div>
-              </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-orange-600">{assignmentCount}</div>
+              <div className="text-xs text-gray-500">Assigning</div>
+            </div>
+            <div className="text-center">
+              <div className="text-2xl font-bold text-green-600">{readyCount}</div>
+              <div className="text-xs text-gray-500">Ready</div>
             </div>
           </div>
         </div>
@@ -73,7 +71,7 @@ export const SKUManagement: React.FC = () => {
 
       {/* View Switcher */}
       <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-6">
           <nav className="flex space-x-8">
             <button
               onClick={() => setView('commercial')}
@@ -113,7 +111,7 @@ export const SKUManagement: React.FC = () => {
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {renderContent()}
       </div>
     </div>
