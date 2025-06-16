@@ -3,6 +3,8 @@ import { Check, X, ChevronDown, ChevronRight, Table, Grid } from 'lucide-react';
 import { Product } from '../types/Product';
 import { fieldGroups } from '../data/fieldGroups';
 import { RejectModal } from './RejectModal';
+import { skuService } from '../services/skuService';
+import { useNavigate } from 'react-router-dom';
 
 interface ProductTableProps {
   products: Product[];
@@ -14,6 +16,7 @@ interface ProductTableProps {
 }
 
 export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFilters }) => {
+  const navigate = useNavigate();
   const [rejectModal, setRejectModal] = useState<{
     isOpen: boolean;
     productId: string;
@@ -31,8 +34,18 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFi
 
   const handleApprove = (productId: string, productName: string) => {
     console.log(`[TESTING] Approved product: ${productName} (${productId})`);
-    alert(`🧪 Testing Mode: Would approve "${productName}"`);
-    // Here you would typically make an API call
+    
+    // Find the full product to get supplier info
+    const product = products.find(p => p.id === productId);
+    const supplier = product?.dodavatel || 'Unknown Supplier';
+    
+    // Create SKU and add to management system
+    skuService.createSKU(productId, productName, supplier, 'current-user');
+    
+    alert(`✅ Product "${productName}" approved and added to SKU Management queue`);
+    
+    // Navigate to SKU management
+    navigate('/sku-management');
   };
 
   const handleReject = (productId: string, productName: string) => {
