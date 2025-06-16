@@ -2,14 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { Package, AlertTriangle, Clock, MapPin, X, ArrowUpDown, History, Users, Warehouse } from 'lucide-react';
 import { skuService } from '../../services/skuService';
 import { SKU, SKUState } from '../../types/SKUManagement';
-import { CapacityQueue } from './CapacityQueue';
 import { WarehouseAssignment } from './WarehouseAssignment';
 import { AuditHistory } from './AuditHistory';
 
-type View = 'commercial' | 'stock-planner' | 'history';
+type View = 'stock-planner' | 'history';
 
 export const SKUManagement: React.FC = () => {
-  const [view, setView] = useState<View>('commercial');
+  const [view, setView] = useState<View>('stock-planner');
   const [skus, setSKUs] = useState<SKU[]>([]);
 
   useEffect(() => {
@@ -24,8 +23,6 @@ export const SKUManagement: React.FC = () => {
 
   const renderContent = () => {
     switch (view) {
-      case 'commercial':
-        return <CapacityQueue />;
       case 'stock-planner':
         return <WarehouseAssignment />;
       case 'history':
@@ -73,17 +70,6 @@ export const SKUManagement: React.FC = () => {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-7xl mx-auto px-6">
           <nav className="flex space-x-8">
-            <button
-              onClick={() => setView('commercial')}
-              className={`py-4 px-1 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
-                view === 'commercial'
-                  ? 'text-green-600 border-b-2 border-green-600'
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-            >
-              <Users className="w-4 h-4" />
-              <span>Commercial Queue</span>
-            </button>
             <button
               onClick={() => setView('stock-planner')}
               className={`py-4 px-1 text-sm font-medium transition-colors relative flex items-center space-x-2 ${
