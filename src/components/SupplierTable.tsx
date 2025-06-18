@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import { Eye, Check, X, ChevronLeft, ChevronRight, User, Calendar } from 'lucide-react';
-import { SupplierEntry, SupplierFilters } from '../types/Supplier';
+import { Eye, Check, X, ChevronLeft, ChevronRight, ChevronDown, ChevronUp, User, Calendar, Package } from 'lucide-react';
+import { SupplierEntry, SupplierFilters, SKUEntry } from '../types/Supplier';
 import { SupplierFiltersComponent } from './SupplierFilters';
 
 interface SupplierTableProps {
@@ -24,6 +24,7 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
 }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [rowsPerPage, setRowsPerPage] = useState(20);
+  const [expandedSuppliers, setExpandedSuppliers] = useState<Set<string>>(new Set());
 
   // Get unique users for filter dropdown
   const availableUsers = Array.from(new Set(suppliers.map(s => s.odpovědnyUzivatel).filter(Boolean))).sort();
@@ -66,6 +67,31 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
     action();
   };
 
+  const toggleSupplierExpansion = (e: React.MouseEvent, supplierId: string) => {
+    e.stopPropagation(); // Prevent row click
+    setExpandedSuppliers(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(supplierId)) {
+        newSet.delete(supplierId);
+      } else {
+        newSet.add(supplierId);
+      }
+      return newSet;
+    });
+  };
+
+  const handleSKUApprove = (supplierId: string, sku: SKUEntry) => {
+    console.log(`Approving SKU: ${sku.name} for supplier: ${supplierId}`);
+    alert(`✅ SKU "${sku.name}" approved successfully!`);
+    // Here you would update the SKU status or make an API call
+  };
+
+  const handleSKUReject = (supplierId: string, sku: SKUEntry) => {
+    console.log(`Rejecting SKU: ${sku.name} for supplier: ${supplierId}`);
+    alert(`❌ SKU "${sku.name}" rejected.`);
+    // Here you would update the SKU status or make an API call
+  };
+
   const renderHints = (hasHints: boolean) => {
     if (!hasHints) return null;
     return (
@@ -102,6 +128,52 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
       </button>
     </div>
   );
+
+  const renderSKURows = (supplier: SupplierEntry) => {
+    if (!expandedSuppliers.has(supplier.id) || !supplier.skus || supplier.skus.length === 0) {
+      return null;
+    }
+
+    return supplier.skus.map((sku) => (
+      <tr key={`${supplier.id}-${sku.id}`} className="bg-gray-50">
+        <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900" colSpan={6}>
+          <div className="pl-8 flex items-center justify-between">
+            <div className="flex items-center space-x-3">
+              <Package className="w-4 h-4 text-gray-400" />
+              <div>
+                <div className="font-medium text-gray-900">{sku.name}</div>
+                <div className="text-xs text-gray-500">
+                  Responsible: {sku.responsibleUser} • Status: {sku.status}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center space-x-1">
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSKUApprove(supplier.id, sku);
+                }}
+                className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                title="Approve SKU"
+              >
+                <Check className="w-3 h-3" />
+              </button>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleSKUReject(supplier.id, sku);
+                }}
+                className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                title="Reject SKU"
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          </div>
+        </td>
+      </tr>
+    ));
+  };
 
   return (
     <div>
@@ -156,45 +228,60 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {currentSuppliers.map((supplier) => (
-                <tr
-                  key={supplier.id}
-                  onClick={() => onRowClick(supplier.id)}
-                  className="hover:bg-gray-50 cursor-pointer transition-colors"
-                >
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                    <div className="flex items-center">
-                      <div>
-                        <div className="font-medium">{supplier.supplier}</div>
-                        <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                <React.Fragment key={supplier.id}>
+                  <tr
+                    onClick={() => onRowClick(supplier.id)}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  >
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                      <div className="flex items-center space-x-2">
+                        {supplier.skus && supplier.skus.length > 0 && (
+                          <button
+                            onClick={(e) => toggleSupplierExpansion(e, supplier.id)}
+                            className="p-1 hover:bg-gray-200 rounded transition-colors"
+                            title={expandedSuppliers.has(supplier.id) ? "Collapse SKUs" : "Expand SKUs"}
+                          >
+                            {expandedSuppliers.has(supplier.id) ? (
+                              <ChevronDown className="w-4 h-4 text-gray-600" />
+                            ) : (
+                              <ChevronRight className="w-4 h-4 text-gray-600" />
+                            )}
+                          </button>
+                        )}
+                        <div>
+                          <div className="font-medium">{supplier.supplier}</div>
+                          <div className="text-xs text-gray-500">ID: {supplier.id}</div>
+                        </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-center">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                        {supplier.skuCount} SKU
-                      </span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-center space-x-1">
-                      <Calendar className="w-4 h-4 text-gray-400" />
-                      <span>{supplier.changeDate}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    <div className="flex items-center space-x-1">
-                      <User className="w-4 h-4 text-gray-400" />
-                      <span className="font-medium">{supplier.odpovědnyUzivatel || '-'}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {renderHints(supplier.hasHints)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {renderActions(supplier)}
-                  </td>
-                </tr>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center">
+                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          {supplier.skuCount} SKU
+                        </span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center space-x-1">
+                        <Calendar className="w-4 h-4 text-gray-400" />
+                        <span>{supplier.changeDate}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      <div className="flex items-center space-x-1">
+                        <User className="w-4 h-4 text-gray-400" />
+                        <span className="font-medium">{supplier.odpovědnyUzivatel || '-'}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {renderHints(supplier.hasHints)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                      {renderActions(supplier)}
+                    </td>
+                  </tr>
+                  {renderSKURows(supplier)}
+                </React.Fragment>
               ))}
             </tbody>
           </table>
