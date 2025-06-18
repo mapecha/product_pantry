@@ -134,45 +134,77 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
       return null;
     }
 
-    return supplier.skus.map((sku) => (
-      <tr key={`${supplier.id}-${sku.id}`} className="bg-gray-50">
-        <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900" colSpan={6}>
-          <div className="pl-8 flex items-center justify-between">
-            <div className="flex items-center space-x-3">
-              <Package className="w-4 h-4 text-gray-400" />
-              <div>
-                <div className="font-medium text-gray-900">{sku.name}</div>
-                <div className="text-xs text-gray-500">
-                  Responsible: {sku.responsibleUser} • Status: {sku.status}
+    // Group SKUs by responsible user
+    const skusByUser = supplier.skus.reduce((acc, sku) => {
+      if (!acc[sku.responsibleUser]) {
+        acc[sku.responsibleUser] = [];
+      }
+      acc[sku.responsibleUser].push(sku);
+      return acc;
+    }, {} as Record<string, SKUEntry[]>);
+
+    const rows: JSX.Element[] = [];
+
+    Object.entries(skusByUser).forEach(([responsibleUser, skus]) => {
+      // Responsible user header row
+      rows.push(
+        <tr key={`${supplier.id}-user-${responsibleUser}`} className="bg-blue-50">
+          <td className="px-6 py-2 whitespace-nowrap text-sm font-medium text-gray-900" colSpan={4}>
+            <div className="pl-4 flex items-center space-x-2">
+              <User className="w-4 h-4 text-blue-600" />
+              <span className="font-medium text-blue-900">{responsibleUser}</span>
+              <span className="text-xs text-blue-700">({skus.length} SKU{skus.length > 1 ? 's' : ''})</span>
+            </div>
+          </td>
+        </tr>
+      );
+
+      // SKU rows under this user
+      skus.forEach((sku) => {
+        rows.push(
+          <tr key={`${supplier.id}-${sku.id}`} className="bg-gray-50">
+            <td className="px-6 py-3 whitespace-nowrap text-sm text-gray-900" colSpan={4}>
+              <div className="pl-12 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  <Package className="w-4 h-4 text-gray-400" />
+                  <div>
+                    <div className="font-medium text-gray-900">{sku.name}</div>
+                    <div className="text-xs text-gray-500 flex items-center space-x-1">
+                      <Calendar className="w-3 h-3" />
+                      <span>{supplier.changeDate}</span>
+                    </div>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-1">
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSKUApprove(supplier.id, sku);
+                    }}
+                    className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
+                    title="Approve SKU"
+                  >
+                    <Check className="w-3 h-3" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSKUReject(supplier.id, sku);
+                    }}
+                    className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
+                    title="Reject SKU"
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-1">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSKUApprove(supplier.id, sku);
-                }}
-                className="px-2 py-1 text-xs bg-green-600 text-white rounded hover:bg-green-700 transition-colors"
-                title="Approve SKU"
-              >
-                <Check className="w-3 h-3" />
-              </button>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  handleSKUReject(supplier.id, sku);
-                }}
-                className="px-2 py-1 text-xs bg-red-600 text-white rounded hover:bg-red-700 transition-colors"
-                title="Reject SKU"
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          </div>
-        </td>
-      </tr>
-    ));
+            </td>
+          </tr>
+        );
+      });
+    });
+
+    return rows;
   };
 
   return (
@@ -204,18 +236,6 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   <div className="flex items-center space-x-1">
                     <span>#SKU</span>
-                  </div>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center space-x-1">
-                    <Calendar className="w-4 h-4" />
-                    <span>Datum změny</span>
-                  </div>
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  <div className="flex items-center space-x-1">
-                    <User className="w-4 h-4" />
-                    <span>Odpovědný uživatel</span>
                   </div>
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
@@ -259,18 +279,6 @@ export const SupplierTable: React.FC<SupplierTableProps> = ({
                         <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
                           {supplier.skuCount} SKU
                         </span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center space-x-1">
-                        <Calendar className="w-4 h-4 text-gray-400" />
-                        <span>{supplier.changeDate}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                      <div className="flex items-center space-x-1">
-                        <User className="w-4 h-4 text-gray-400" />
-                        <span className="font-medium">{supplier.odpovědnyUzivatel || '-'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
