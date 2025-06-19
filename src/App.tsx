@@ -40,21 +40,30 @@ const SupplierOnboardingQueryWrapper: React.FC = () => {
   const token = searchParams.get('token');
   const onboardingId = searchParams.get('onboardingId');
   
+  // Debug logging
+  console.log('SupplierOnboardingQueryWrapper rendered');
+  console.log('Token:', token);
+  console.log('OnboardingId:', onboardingId);
+  console.log('Search params:', Array.from(searchParams.entries()));
+  
   const handleAuthSuccess = (newOnboardingId: string) => {
     navigate(`/supplier-onboarding?onboardingId=${newOnboardingId}`);
   };
   
   // If we have a token, show the auth component
   if (token) {
+    console.log('Rendering SupplierAuth with token:', token);
     return <SupplierAuth token={token} onAuthSuccess={handleAuthSuccess} />;
   }
   
   // If we have an onboardingId, show the onboarding component
   if (onboardingId) {
+    console.log('Rendering SupplierOnboarding with onboardingId:', onboardingId);
     return <SupplierOnboarding onboardingId={onboardingId} />;
   }
   
   // If neither, show error
+  console.log('No valid parameters found, showing error');
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="max-w-md w-full bg-white rounded-lg shadow-md p-6">
@@ -66,6 +75,12 @@ const SupplierOnboardingQueryWrapper: React.FC = () => {
           <p className="text-sm text-gray-500">
             Please check the link or contact support for assistance.
           </p>
+          <div className="mt-4 text-xs text-gray-400">
+            <p>Debug info:</p>
+            <p>Token: {token || 'null'}</p>
+            <p>OnboardingId: {onboardingId || 'null'}</p>
+            <p>All params: {JSON.stringify(Array.from(searchParams.entries()))}</p>
+          </div>
         </div>
       </div>
     </div>
