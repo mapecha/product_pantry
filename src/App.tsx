@@ -2,7 +2,6 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { SupplierPortal } from './components/SupplierPortal';
 import { ProductDetailPage } from './components/ProductDetailPage';
-import { SKUManagement } from './components/SKUManagement';
 
 function App() {
   return (
