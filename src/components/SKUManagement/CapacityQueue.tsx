@@ -48,7 +48,7 @@ export const CapacityQueue: React.FC = () => {
         
         // Find SKUs waiting for this specific warehouse
         const skusForWarehouse = waitingSKUs.filter(sku => 
-          sku.warehousesToList && sku.warehousesToList.includes(warehouse.short)
+          sku.remainingWarehouses && sku.remainingWarehouses.includes(warehouse.short)
         );
 
         if (skusForWarehouse.length > 0) {
@@ -171,9 +171,9 @@ export const CapacityQueue: React.FC = () => {
                                 <p className="text-xs text-gray-500">
                                   {sku.supplier} • SKU: {sku.id}
                                 </p>
-                                {sku.warehousesToList && sku.warehousesToList.length > 0 && (
+                                {sku.remainingWarehouses && sku.remainingWarehouses.length > 0 && (
                                   <div className="mt-1 flex flex-wrap gap-1">
-                                    {sku.warehousesToList.map((warehouse) => (
+                                    {sku.remainingWarehouses.map((warehouse) => (
                                       <span
                                         key={warehouse}
                                         className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
@@ -181,6 +181,13 @@ export const CapacityQueue: React.FC = () => {
                                         {warehouse}
                                       </span>
                                     ))}
+                                  </div>
+                                )}
+                                {sku.warehousesToList && sku.warehousesToList.length > sku.remainingWarehouses?.length && (
+                                  <div className="mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      {(sku.warehousesToList.length - (sku.remainingWarehouses?.length || 0))} warehouse(s) assigned
+                                    </span>
                                   </div>
                                 )}
                               </div>

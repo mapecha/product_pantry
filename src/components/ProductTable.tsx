@@ -64,7 +64,7 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFi
     skuService.createSKU(productId, productName, supplier, 'current-user', selectedWarehouses);
     
     if (selectedWarehouses.length > 1) {
-      alert(`✅ Product "${productName}" approved for ${selectedWarehouses.length} warehouses (${selectedWarehouses.join(', ')}) and added to SKU Management queue as separate SKUs`);
+      alert(`✅ Product "${productName}" approved for ${selectedWarehouses.length} warehouses (${selectedWarehouses.join(', ')}) and added to SKU Management queue`);
     } else {
       alert(`✅ Product "${productName}" approved for ${selectedWarehouses.join(', ')} and added to SKU Management queue`);
     }
