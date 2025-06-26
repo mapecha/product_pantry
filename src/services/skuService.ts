@@ -38,27 +38,62 @@ class SKUService {
   }
 
   createSKU(productId: string, productName: string, supplier: string, approvedBy: string, warehousesToList?: string[]): SKU {
-    const newSKU: SKU = {
-      id: `SKU-${Date.now()}`,
-      productId,
-      productName,
-      supplier,
-      state: SKUState.WAITING_FOR_CAPACITY,
-      queuePosition: this.getNextQueuePosition(),
-      approvedAt: new Date().toISOString(),
-      approvedBy,
-      warehousesToList: warehousesToList || [],
-      lastModified: new Date().toISOString(),
-      lockedForReordering: false
-    };
+    const baseTimestamp = Date.now();
+    const warehouses = warehousesToList || [];
+    
+    // If multiple warehouses are selected, create separate SKU instances for each
+    if (warehouses.length > 1) {
+      const createdSKUs: SKU[] = [];
+      
+      warehouses.forEach((warehouse, index) => {
+        const newSKU: SKU = {
+          id: `SKU-${baseTimestamp}-${warehouse}`,
+          productId,
+          productName: `${productName} (${warehouse})`,
+          supplier,
+          state: SKUState.WAITING_FOR_CAPACITY,
+          queuePosition: this.getNextQueuePosition(),
+          approvedAt: new Date().toISOString(),
+          approvedBy,
+          warehousesToList: [warehouse], // Single warehouse per SKU instance
+          remainingWarehouses: [warehouse],
+          lastModified: new Date().toISOString(),
+          lockedForReordering: false
+        };
+        
+        this.skus.push(newSKU);
+        createdSKUs.push(newSKU);
+        this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved for ${warehouse} warehouse`);
+      });
+      
+      this.saveToStorage();
+      this.notifyListeners();
+      return createdSKUs[0]; // Return first SKU for compatibility
+    } else {
+      // Single warehouse or no specific warehouse
+      const newSKU: SKU = {
+        id: `SKU-${baseTimestamp}`,
+        productId,
+        productName,
+        supplier,
+        state: SKUState.WAITING_FOR_CAPACITY,
+        queuePosition: this.getNextQueuePosition(),
+        approvedAt: new Date().toISOString(),
+        approvedBy,
+        warehousesToList: warehouses,
+        remainingWarehouses: [...warehouses],
+        lastModified: new Date().toISOString(),
+        lockedForReordering: false
+      };
 
-    this.skus.push(newSKU);
-    const warehouseInfo = warehousesToList ? ` for warehouses: ${warehousesToList.join(', ')}` : '';
-    this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved and added to capacity queue${warehouseInfo}`);
-    this.saveToStorage();
-    this.notifyListeners();
+      this.skus.push(newSKU);
+      const warehouseInfo = warehouses.length > 0 ? ` for warehouse: ${warehouses.join(', ')}` : '';
+      this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved and added to capacity queue${warehouseInfo}`);
+      this.saveToStorage();
+      this.notifyListeners();
 
-    return newSKU;
+      return newSKU;
+    }
   }
 
   private getNextQueuePosition(): number {

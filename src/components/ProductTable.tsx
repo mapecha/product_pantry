@@ -63,7 +63,11 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFi
     // Create SKU with warehouse assignments
     skuService.createSKU(productId, productName, supplier, 'current-user', selectedWarehouses);
     
-    alert(`✅ Product "${productName}" approved for ${selectedWarehouses.join(', ')} and added to SKU Management queue`);
+    if (selectedWarehouses.length > 1) {
+      alert(`✅ Product "${productName}" approved for ${selectedWarehouses.length} warehouses (${selectedWarehouses.join(', ')}) and added to SKU Management queue as separate SKUs`);
+    } else {
+      alert(`✅ Product "${productName}" approved for ${selectedWarehouses.join(', ')} and added to SKU Management queue`);
+    }
     
     // Close modal
     setWarehouseModal({ isOpen: false, productId: '', productName: '' });

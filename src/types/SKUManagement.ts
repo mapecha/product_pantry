@@ -18,6 +18,7 @@ export interface SKU {
   approvedAt: string;
   approvedBy: string;
   warehousesToList?: string[]; // Warehouses selected for listing during approval
+  remainingWarehouses?: string[]; // Warehouses still waiting for capacity
   warehouse?: {
     id: string;
     name: string;
