@@ -59,10 +59,22 @@ export const WarehouseAssignment: React.FC = () => {
   }, {} as Record<string, SKU[]>);
 
   // Define warehouse order and icons
-  const warehouseConfig: Record<string, { order: number; color: string; icon: string }> = {
-    'Prague Central': { order: 1, color: 'blue', icon: '🏢' },
-    'Brno Distribution': { order: 2, color: 'green', icon: '🏭' },
-    'Ostrava Hub': { order: 3, color: 'purple', icon: '🏗️' }
+  const warehouseConfig: Record<string, { order: number; colorClasses: { bg: string; text: string; border: string }; icon: string }> = {
+    'Prague Central': { 
+      order: 1, 
+      colorClasses: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-500' },
+      icon: '🏢' 
+    },
+    'Brno Distribution': { 
+      order: 2, 
+      colorClasses: { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-500' },
+      icon: '🏭' 
+    },
+    'Ostrava Hub': { 
+      order: 3, 
+      colorClasses: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-500' },
+      icon: '🏗️' 
+    }
   };
 
   const sortedWarehouses = Object.keys(skusByWarehouse).sort((a, b) => {
@@ -116,11 +128,11 @@ export const WarehouseAssignment: React.FC = () => {
         {sortedWarehouses.map((warehouseName) => {
           const skus = skusByWarehouse[warehouseName];
           const config = warehouseConfig[warehouseName];
-          const colorClass = config?.color || 'gray';
+          const colorClasses = config?.colorClasses || { bg: 'bg-gray-50', text: 'text-gray-800', border: 'border-gray-500' };
           
           return (
             <div key={warehouseName} className="bg-white rounded-lg shadow">
-              <div className={`px-6 py-4 border-b border-gray-200 bg-gradient-to-r from-${colorClass}-50 to-white`}>
+              <div className={`px-6 py-4 border-b border-gray-200 bg-gradient-to-r ${colorClasses.bg} to-white`}>
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
                     <span className="text-2xl">{config?.icon || '📦'}</span>
@@ -129,7 +141,7 @@ export const WarehouseAssignment: React.FC = () => {
                       <p className="text-sm text-gray-600">{skus.length} SKUs awaiting position</p>
                     </div>
                   </div>
-                  <Building2 className={`h-6 w-6 text-${colorClass}-600`} />
+                  <Building2 className={`h-6 w-6 ${colorClasses.text}`} />
                 </div>
               </div>
               
@@ -146,7 +158,7 @@ export const WarehouseAssignment: React.FC = () => {
                       onClick={() => setSelectedSKU(sku)}
                       className={`border rounded-lg p-4 cursor-pointer transition-all ${
                         selectedSKU?.id === sku.id
-                          ? `border-${colorClass}-500 bg-${colorClass}-50 shadow-md`
+                          ? `${colorClasses.border} ${colorClasses.bg} shadow-md`
                           : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
                       }`}
                     >
@@ -158,26 +170,12 @@ export const WarehouseAssignment: React.FC = () => {
                           <p className="text-xs text-gray-500">
                             {sku.supplier} • SKU: {sku.id}
                           </p>
-                          {sku.warehousesToList && sku.warehousesToList.length > 0 && (
-                            <div className="mt-1 flex flex-wrap gap-1">
-                              {sku.warehousesToList.map((warehouse) => (
-                                <span
-                                  key={warehouse}
-                                  className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${
-                                    warehouse === 'Prague' ? 'bg-blue-100 text-blue-800' :
-                                    warehouse === 'Brno' ? 'bg-green-100 text-green-800' :
-                                    warehouse === 'Ostrava' ? 'bg-purple-100 text-purple-800' :
-                                    'bg-gray-100 text-gray-800'
-                                  }`}
-                                >
-                                  {warehouse}
-                                </span>
-                              ))}
-                            </div>
-                          )}
+                          <p className="text-xs text-gray-400 mt-1">
+                            Awaiting position assignment
+                          </p>
                         </div>
                         <div className="flex flex-col items-end space-y-1">
-                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-${colorClass}-100 text-${colorClass}-800`}>
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses.bg} ${colorClasses.text}`}>
                             Assign Position
                           </span>
                           <button
