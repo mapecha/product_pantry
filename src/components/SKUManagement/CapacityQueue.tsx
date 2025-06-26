@@ -35,14 +35,33 @@ export const CapacityQueue: React.FC = () => {
     if (waitingSKUs.length > 0 && Math.random() > 0.7) {
       // 30% chance of capacity becoming available
       const nextSKU = waitingSKUs[0];
-      const warehouses = ['Prague Central', 'Brno Distribution', 'Ostrava Hub'];
-      const selectedWarehouse = warehouses[Math.floor(Math.random() * warehouses.length)];
       
-      skuService.progressToWarehouseAssignment(
-        nextSKU.id,
-        `WH-${selectedWarehouse.replace(' ', '-')}`,
-        selectedWarehouse
-      );
+      // If SKU has specific warehouses selected, use one of those
+      if (nextSKU.warehousesToList && nextSKU.warehousesToList.length > 0) {
+        const selectedWarehouse = nextSKU.warehousesToList[Math.floor(Math.random() * nextSKU.warehousesToList.length)];
+        const warehouseMap: Record<string, string> = {
+          'Prague': 'Prague Central',
+          'Brno': 'Brno Distribution',
+          'Ostrava': 'Ostrava Hub'
+        };
+        const fullWarehouseName = warehouseMap[selectedWarehouse] || selectedWarehouse;
+        
+        skuService.progressToWarehouseAssignment(
+          nextSKU.id,
+          `WH-${selectedWarehouse}`,
+          fullWarehouseName
+        );
+      } else {
+        // Fallback to random warehouse if none specified
+        const warehouses = ['Prague Central', 'Brno Distribution', 'Ostrava Hub'];
+        const selectedWarehouse = warehouses[Math.floor(Math.random() * warehouses.length)];
+        
+        skuService.progressToWarehouseAssignment(
+          nextSKU.id,
+          `WH-${selectedWarehouse.replace(' ', '-')}`,
+          selectedWarehouse
+        );
+      }
     }
   };
 
@@ -150,6 +169,18 @@ export const CapacityQueue: React.FC = () => {
                                 <p className="text-xs text-gray-500">
                                   {sku.supplier} • SKU: {sku.id}
                                 </p>
+                                {sku.warehousesToList && sku.warehousesToList.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {sku.warehousesToList.map((warehouse) => (
+                                      <span
+                                        key={warehouse}
+                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                                      >
+                                        {warehouse}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             

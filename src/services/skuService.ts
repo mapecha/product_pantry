@@ -37,7 +37,7 @@ class SKUService {
     };
   }
 
-  createSKU(productId: string, productName: string, supplier: string, approvedBy: string): SKU {
+  createSKU(productId: string, productName: string, supplier: string, approvedBy: string, warehousesToList?: string[]): SKU {
     const newSKU: SKU = {
       id: `SKU-${Date.now()}`,
       productId,
@@ -47,12 +47,14 @@ class SKUService {
       queuePosition: this.getNextQueuePosition(),
       approvedAt: new Date().toISOString(),
       approvedBy,
+      warehousesToList: warehousesToList || [],
       lastModified: new Date().toISOString(),
       lockedForReordering: false
     };
 
     this.skus.push(newSKU);
-    this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved and added to capacity queue`);
+    const warehouseInfo = warehousesToList ? ` for warehouses: ${warehousesToList.join(', ')}` : '';
+    this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved and added to capacity queue${warehouseInfo}`);
     this.saveToStorage();
     this.notifyListeners();
 
