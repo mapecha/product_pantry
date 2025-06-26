@@ -16,8 +16,8 @@ export const CapacityQueue: React.FC = () => {
     loadSKUs();
     const unsubscribe = skuService.subscribe(loadSKUs);
     
-    // Simulate capacity checks every 30 seconds
-    const interval = setInterval(simulateCapacityCheck, 30000);
+    // Simulate capacity checks every 10 seconds
+    const interval = setInterval(simulateCapacityCheck, 10000);
     
     return () => {
       unsubscribe();
@@ -32,18 +32,39 @@ export const CapacityQueue: React.FC = () => {
 
   const simulateCapacityCheck = () => {
     const waitingSKUs = skuService.getSKUs(SKUState.WAITING_FOR_CAPACITY);
-    if (waitingSKUs.length > 0 && Math.random() > 0.7) {
-      // 30% chance of capacity becoming available
-      const nextSKU = waitingSKUs[0];
-      const warehouses = ['Prague Central', 'Brno Distribution', 'Ostrava Hub'];
-      const selectedWarehouse = warehouses[Math.floor(Math.random() * warehouses.length)];
-      
-      skuService.progressToWarehouseAssignment(
-        nextSKU.id,
-        `WH-${selectedWarehouse.replace(' ', '-')}`,
-        selectedWarehouse
-      );
-    }
+    if (waitingSKUs.length === 0) return;
+
+    // Define warehouses and their capacity check probability
+    const warehouses = [
+      { short: 'Prague', full: 'Prague Central', checkProbability: 0.4 },
+      { short: 'Brno', full: 'Brno Distribution', checkProbability: 0.3 },
+      { short: 'Ostrava', full: 'Ostrava Hub', checkProbability: 0.3 }
+    ];
+
+    // Check each warehouse for capacity
+    warehouses.forEach(warehouse => {
+      if (Math.random() < warehouse.checkProbability) {
+        // This warehouse has capacity available
+        
+        // Find SKUs waiting for this specific warehouse
+        const skusForWarehouse = waitingSKUs.filter(sku => 
+          sku.warehousesToList && sku.warehousesToList.includes(warehouse.short)
+        );
+
+        if (skusForWarehouse.length > 0) {
+          // Take the first SKU in queue for this warehouse
+          const nextSKU = skusForWarehouse[0];
+          
+          console.log(`[Capacity Check] ${warehouse.full} has capacity available for SKU ${nextSKU.id}`);
+          
+          skuService.progressToWarehouseAssignment(
+            nextSKU.id,
+            `WH-${warehouse.short}`,
+            warehouse.full
+          );
+        }
+      }
+    });
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -89,40 +110,7 @@ export const CapacityQueue: React.FC = () => {
         </p>
       </div>
 
-      {/* Queue Stats */}
-      <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <Package className="h-10 w-10 text-blue-500 mr-3" />
-            <div>
-              <p className="text-sm text-gray-600">SKUs in Queue</p>
-              <p className="text-2xl font-bold text-gray-900">{skus.length}</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <Clock className="h-10 w-10 text-yellow-500 mr-3" />
-            <div>
-              <p className="text-sm text-gray-600">Avg. Wait Time</p>
-              <p className="text-2xl font-bold text-gray-900">2.5 days</p>
-            </div>
-          </div>
-        </div>
-        <div className="bg-white rounded-lg shadow p-4">
-          <div className="flex items-center">
-            <AlertTriangle className="h-10 w-10 text-orange-500 mr-3" />
-            <div>
-              <p className="text-sm text-gray-600">Locked SKUs</p>
-              <p className="text-2xl font-bold text-gray-900">
-                {skus.filter(s => s.lockedForReordering).length}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Queue List */}
+      {/* Queue List - Dashboard stats removed */}
       <div className="bg-white rounded-lg shadow">
         <div className="px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-medium text-gray-900">Queue Order</h3>
@@ -183,6 +171,18 @@ export const CapacityQueue: React.FC = () => {
                                 <p className="text-xs text-gray-500">
                                   {sku.supplier} • SKU: {sku.id}
                                 </p>
+                                {sku.warehousesToList && sku.warehousesToList.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {sku.warehousesToList.map((warehouse) => (
+                                      <span
+                                        key={warehouse}
+                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                                      >
+                                        {warehouse}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
                               </div>
                             </div>
                             
@@ -257,4 +257,4 @@ export const CapacityQueue: React.FC = () => {
       )}
     </div>
   );
-};
+}; 

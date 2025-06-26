@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Package, MapPin, ArrowLeft, ArrowRight, CheckCircle, Warehouse } from 'lucide-react';
+import { Package, MapPin, ArrowLeft, CheckCircle, Warehouse, Building2 } from 'lucide-react';
 import { skuService } from '../../services/skuService';
 import { SKU, SKUState } from '../../types/SKUManagement';
 
 export const WarehouseAssignment: React.FC = () => {
   const [assignmentSKUs, setAssignmentSKUs] = useState<SKU[]>([]);
-  const [waitingForOrderSKUs, setWaitingForOrderSKUs] = useState<SKU[]>([]);
   const [selectedSKU, setSelectedSKU] = useState<SKU | null>(null);
   const [warehousePosition, setWarehousePosition] = useState('');
   const [moveBackwardModal, setMoveBackwardModal] = useState<{
@@ -22,7 +21,6 @@ export const WarehouseAssignment: React.FC = () => {
 
   const loadSKUs = () => {
     setAssignmentSKUs(skuService.getSKUs(SKUState.ASSIGN_WAREHOUSE_POSITION));
-    setWaitingForOrderSKUs(skuService.getSKUs(SKUState.WAITING_FOR_ORDER));
   };
 
   const handleAssignPosition = () => {
@@ -50,12 +48,47 @@ export const WarehouseAssignment: React.FC = () => {
     });
   };
 
+  // Group SKUs by warehouse
+  const skusByWarehouse = assignmentSKUs.reduce((acc, sku) => {
+    const warehouseName = sku.warehouse?.name || 'Unassigned';
+    if (!acc[warehouseName]) {
+      acc[warehouseName] = [];
+    }
+    acc[warehouseName].push(sku);
+    return acc;
+  }, {} as Record<string, SKU[]>);
+
+  // Define warehouse order and icons
+  const warehouseConfig: Record<string, { order: number; colorClasses: { bg: string; text: string; border: string }; icon: string }> = {
+    'Prague Central': { 
+      order: 1, 
+      colorClasses: { bg: 'bg-blue-50', text: 'text-blue-800', border: 'border-blue-500' },
+      icon: '🏢' 
+    },
+    'Brno Distribution': { 
+      order: 2, 
+      colorClasses: { bg: 'bg-green-50', text: 'text-green-800', border: 'border-green-500' },
+      icon: '🏭' 
+    },
+    'Ostrava Hub': { 
+      order: 3, 
+      colorClasses: { bg: 'bg-purple-50', text: 'text-purple-800', border: 'border-purple-500' },
+      icon: '🏗️' 
+    }
+  };
+
+  const sortedWarehouses = Object.keys(skusByWarehouse).sort((a, b) => {
+    const orderA = warehouseConfig[a]?.order || 999;
+    const orderB = warehouseConfig[b]?.order || 999;
+    return orderA - orderB;
+  });
+
   return (
     <div>
       <div className="mb-6">
         <h2 className="text-xl font-semibold text-gray-900">Warehouse Assignment</h2>
         <p className="mt-1 text-sm text-gray-600">
-          Assign warehouse positions to SKUs and manage their progression.
+          Assign warehouse positions to SKUs by location.
         </p>
       </div>
 
@@ -72,163 +105,138 @@ export const WarehouseAssignment: React.FC = () => {
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center">
-            <CheckCircle className="h-10 w-10 text-green-500 mr-3" />
+            <Warehouse className="h-10 w-10 text-blue-500 mr-3" />
             <div>
-              <p className="text-sm text-gray-600">Waiting for Order</p>
-              <p className="text-2xl font-bold text-gray-900">{waitingForOrderSKUs.length}</p>
+              <p className="text-sm text-gray-600">Active Warehouses</p>
+              <p className="text-2xl font-bold text-gray-900">{Object.keys(skusByWarehouse).length}</p>
             </div>
           </div>
         </div>
         <div className="bg-white rounded-lg shadow p-4">
           <div className="flex items-center">
-            <Warehouse className="h-10 w-10 text-blue-500 mr-3" />
+            <CheckCircle className="h-10 w-10 text-green-500 mr-3" />
             <div>
-              <p className="text-sm text-gray-600">Assigned Today</p>
-              <p className="text-2xl font-bold text-gray-900">12</p>
+              <p className="text-sm text-gray-600">Completion Rate</p>
+              <p className="text-2xl font-bold text-gray-900">94%</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="grid grid-cols-2 gap-6">
-        {/* SKUs Awaiting Position Assignment */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Awaiting Position Assignment</h3>
-          </div>
+      {/* Warehouse Sections */}
+      <div className="space-y-6">
+        {sortedWarehouses.map((warehouseName) => {
+          const skus = skusByWarehouse[warehouseName];
+          const config = warehouseConfig[warehouseName];
+          const colorClasses = config?.colorClasses || { bg: 'bg-gray-50', text: 'text-gray-800', border: 'border-gray-500' };
           
-          {assignmentSKUs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <MapPin className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p>No SKUs awaiting position assignment</p>
-            </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              {assignmentSKUs.map((sku) => (
-                <div
-                  key={sku.id}
-                  onClick={() => setSelectedSKU(sku)}
-                  className={`border rounded-lg p-4 cursor-pointer transition-colors ${
-                    selectedSKU?.id === sku.id
-                      ? 'border-blue-500 bg-blue-50'
-                      : 'border-gray-200 hover:border-gray-300'
-                  }`}
-                >
-                  <div className="flex items-center justify-between">
+          return (
+            <div key={warehouseName} className="bg-white rounded-lg shadow">
+              <div className={`px-6 py-4 border-b border-gray-200 bg-gradient-to-r ${colorClasses.bg} to-white`}>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-2xl">{config?.icon || '📦'}</span>
                     <div>
-                      <h4 className="text-sm font-medium text-gray-900">
-                        {sku.productName}
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        {sku.supplier} • {sku.warehouse?.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        SKU: {sku.id}
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800">
-                        Assign Position
-                      </span>
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setMoveBackwardModal({ isOpen: true, sku, reason: '' });
-                        }}
-                        className="text-xs text-gray-500 hover:text-red-600"
-                      >
-                        <ArrowLeft className="w-3 h-3 inline mr-1" />
-                        Move Back
-                      </button>
+                      <h3 className="text-lg font-medium text-gray-900">{warehouseName}</h3>
+                      <p className="text-sm text-gray-600">{skus.length} SKUs awaiting position</p>
                     </div>
                   </div>
+                  <Building2 className={`h-6 w-6 ${colorClasses.text}`} />
                 </div>
-              ))}
-            </div>
-          )}
-          
-          {/* Position Assignment Form */}
-          {selectedSKU && (
-            <div className="px-6 py-4 border-t border-gray-200 bg-gray-50">
-              <h4 className="text-sm font-medium text-gray-900 mb-2">
-                Assign Position for: {selectedSKU.productName}
-              </h4>
-              <div className="flex space-x-2">
-                <input
-                  type="text"
-                  value={warehousePosition}
-                  onChange={(e) => setWarehousePosition(e.target.value)}
-                  placeholder="e.g., A01-1-1"
-                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm"
-                />
-                <button
-                  onClick={handleAssignPosition}
-                  disabled={!warehousePosition}
-                  className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50"
-                >
-                  Assign
-                </button>
               </div>
-            </div>
-          )}
-        </div>
-
-        {/* SKUs Waiting for Order */}
-        <div className="bg-white rounded-lg shadow">
-          <div className="px-6 py-4 border-b border-gray-200">
-            <h3 className="text-lg font-medium text-gray-900">Waiting for Order</h3>
-          </div>
-          
-          {waitingForOrderSKUs.length === 0 ? (
-            <div className="p-8 text-center text-gray-500">
-              <Package className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-              <p>No SKUs waiting for order</p>
-            </div>
-          ) : (
-            <div className="p-4 space-y-2">
-              {waitingForOrderSKUs.map((sku) => (
-                <div
-                  key={sku.id}
-                  className="border border-gray-200 rounded-lg p-4"
-                >
-                  <div className="flex items-center justify-between">
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-900">
-                        {sku.productName}
-                      </h4>
-                      <p className="text-xs text-gray-500">
-                        {sku.supplier} • {sku.warehouse?.name}
-                      </p>
-                      <p className="text-xs text-gray-500 mt-1">
-                        Position: <span className="font-mono">{sku.warehouse?.position}</span>
-                      </p>
-                    </div>
-                    <div className="flex flex-col items-end space-y-1">
-                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                        Ready for Order
-                      </span>
-                      <button
-                        onClick={() => setMoveBackwardModal({ 
-                          isOpen: true, 
-                          sku, 
-                          reason: '' 
-                        })}
-                        className="text-xs text-gray-500 hover:text-red-600"
-                      >
-                        <ArrowLeft className="w-3 h-3 inline mr-1" />
-                        Move Back
-                      </button>
-                    </div>
-                  </div>
-                  <div className="mt-2 text-xs text-gray-500">
-                    Assigned: {sku.warehouse?.assignedAt && formatDate(sku.warehouse.assignedAt)}
-                  </div>
+              
+              {skus.length === 0 ? (
+                <div className="p-8 text-center text-gray-500">
+                  <MapPin className="mx-auto h-12 w-12 text-gray-400 mb-4" />
+                  <p>No SKUs awaiting position assignment</p>
                 </div>
-              ))}
+              ) : (
+                <div className="p-4 space-y-2">
+                  {skus.map((sku) => (
+                    <div
+                      key={sku.id}
+                      onClick={() => setSelectedSKU(sku)}
+                      className={`border rounded-lg p-4 cursor-pointer transition-all ${
+                        selectedSKU?.id === sku.id
+                          ? `${colorClasses.border} ${colorClasses.bg} shadow-md`
+                          : 'border-gray-200 hover:border-gray-300 hover:shadow-sm'
+                      }`}
+                    >
+                      <div className="flex items-center justify-between">
+                        <div className="flex-1">
+                          <h4 className="text-sm font-medium text-gray-900">
+                            {sku.productName}
+                          </h4>
+                          <p className="text-xs text-gray-500">
+                            {sku.supplier} • SKU: {sku.id}
+                          </p>
+                          <p className="text-xs text-gray-400 mt-1">
+                            Awaiting position assignment
+                          </p>
+                        </div>
+                        <div className="flex flex-col items-end space-y-1">
+                          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${colorClasses.bg} ${colorClasses.text}`}>
+                            Assign Position
+                          </span>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setMoveBackwardModal({ isOpen: true, sku, reason: '' });
+                            }}
+                            className="text-xs text-gray-500 hover:text-red-600"
+                          >
+                            <ArrowLeft className="w-3 h-3 inline mr-1" />
+                            Move Back
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
-          )}
-        </div>
+          );
+        })}
       </div>
+        
+      {/* Position Assignment Form */}
+      {selectedSKU && (
+        <div className="mt-6 bg-white rounded-lg shadow">
+          <div className="px-6 py-4 bg-gray-50 rounded-lg">
+            <h4 className="text-sm font-medium text-gray-900 mb-2">
+              Assign Position for: {selectedSKU.productName}
+            </h4>
+            <p className="text-xs text-gray-600 mb-3">
+              Warehouse: {selectedSKU.warehouse?.name}
+            </p>
+            <div className="flex space-x-2">
+              <input
+                type="text"
+                value={warehousePosition}
+                onChange={(e) => setWarehousePosition(e.target.value)}
+                placeholder="e.g., A01-1-1"
+                className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+              />
+              <button
+                onClick={handleAssignPosition}
+                disabled={!warehousePosition}
+                className="px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Assign Position
+              </button>
+              <button
+                onClick={() => {
+                  setSelectedSKU(null);
+                  setWarehousePosition('');
+                }}
+                className="px-4 py-2 bg-gray-300 text-gray-700 text-sm font-medium rounded-md hover:bg-gray-400"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Move Backward Modal */}
       {moveBackwardModal.isOpen && (
@@ -238,7 +246,7 @@ export const WarehouseAssignment: React.FC = () => {
               Move SKU Backward
             </h3>
             <p className="text-sm text-gray-600 mb-4">
-              Move "{moveBackwardModal.sku?.productName}" back to the previous state.
+              Move "{moveBackwardModal.sku?.productName}" back to the capacity queue.
             </p>
             <textarea
               value={moveBackwardModal.reason}

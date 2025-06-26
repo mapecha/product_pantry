@@ -3,6 +3,7 @@ import { Check, X, ChevronDown, ChevronRight, Table, Grid } from 'lucide-react';
 import { Product } from '../types/Product';
 import { fieldGroups } from '../data/fieldGroups';
 import { RejectModal } from './RejectModal';
+import { WarehouseSelectionModal } from './WarehouseSelectionModal';
 import { skuService } from '../services/skuService';
 import { useNavigate } from 'react-router-dom';
 
@@ -27,22 +28,45 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFi
     productName: ''
   });
 
+  const [warehouseModal, setWarehouseModal] = useState<{
+    isOpen: boolean;
+    productId: string;
+    productName: string;
+  }>({
+    isOpen: false,
+    productId: '',
+    productName: ''
+  });
+
   const [collapsedSections, setCollapsedSections] = useState<Record<string, boolean>>({});
   const [viewMode, setViewMode] = useState<'table' | 'products'>('table');
   const [collapsedProducts, setCollapsedProducts] = useState<Record<string, boolean>>({});
   const [collapsedProductSections, setCollapsedProductSections] = useState<Record<string, Record<string, boolean>>>({});
 
   const handleApprove = (productId: string, productName: string) => {
-    console.log(`[TESTING] Approved product: ${productName} (${productId})`);
+    // Open warehouse selection modal
+    setWarehouseModal({
+      isOpen: true,
+      productId,
+      productName
+    });
+  };
+
+  const handleWarehouseSelection = (selectedWarehouses: string[]) => {
+    const { productId, productName } = warehouseModal;
+    console.log(`[TESTING] Approved product: ${productName} (${productId}) for warehouses: ${selectedWarehouses.join(', ')}`);
     
     // Find the full product to get supplier info
     const product = products.find(p => p.id === productId);
     const supplier = product?.dodavatel || 'Unknown Supplier';
     
-    // Create SKU and add to management system
-    skuService.createSKU(productId, productName, supplier, 'current-user');
+    // Create SKU with warehouse assignments
+    skuService.createSKU(productId, productName, supplier, 'current-user', selectedWarehouses);
     
-    alert(`✅ Product "${productName}" approved and added to SKU Management queue`);
+    alert(`✅ Product "${productName}" approved for ${selectedWarehouses.join(', ')} and added to SKU Management queue`);
+    
+    // Close modal
+    setWarehouseModal({ isOpen: false, productId: '', productName: '' });
     
     // Navigate to SKU management
     navigate('/sku-management');
@@ -461,6 +485,13 @@ export const ProductTable: React.FC<ProductTableProps> = ({ products, supplierFi
         onClose={() => setRejectModal({ isOpen: false, productId: '', productName: '' })}
         onSubmit={handleRejectSubmit}
         productName={rejectModal.productName}
+      />
+
+      <WarehouseSelectionModal
+        isOpen={warehouseModal.isOpen}
+        onClose={() => setWarehouseModal({ isOpen: false, productId: '', productName: '' })}
+        onConfirm={handleWarehouseSelection}
+        productName={warehouseModal.productName}
       />
     </div>
   );
