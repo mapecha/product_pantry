@@ -37,7 +37,10 @@ class SKUService {
     };
   }
 
-  createSKU(productId: string, productName: string, supplier: string, approvedBy: string): SKU {
+  createSKU(productId: string, productName: string, supplier: string, approvedBy: string, warehousesToList?: string[]): SKU {
+    const warehouses = warehousesToList || [];
+    
+    // Create single SKU with all warehouses
     const newSKU: SKU = {
       id: `SKU-${Date.now()}`,
       productId,
@@ -47,12 +50,15 @@ class SKUService {
       queuePosition: this.getNextQueuePosition(),
       approvedAt: new Date().toISOString(),
       approvedBy,
+      warehousesToList: warehouses,
+      remainingWarehouses: [...warehouses], // Track which warehouses still need capacity
       lastModified: new Date().toISOString(),
       lockedForReordering: false
     };
 
     this.skus.push(newSKU);
-    this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved and added to capacity queue`);
+    const warehouseInfo = warehouses.length > 0 ? ` for warehouses: ${warehouses.join(', ')}` : '';
+    this.addAuditLog(approvedBy, 'SKU Created', newSKU.id, undefined, SKUState.WAITING_FOR_CAPACITY, `Product ${productName} approved and added to capacity queue${warehouseInfo}`);
     this.saveToStorage();
     this.notifyListeners();
 
@@ -123,21 +129,51 @@ class SKUService {
   }
 
   progressToWarehouseAssignment(skuId: string, warehouseId: string, warehouseName: string): boolean {
-    const sku = this.skus.find(s => s.id === skuId);
-    if (!sku || sku.state !== SKUState.WAITING_FOR_CAPACITY) {
+    const originalSku = this.skus.find(s => s.id === skuId);
+    if (!originalSku || originalSku.state !== SKUState.WAITING_FOR_CAPACITY) {
       return false;
     }
 
-    const oldState = sku.state;
-    sku.state = SKUState.ASSIGN_WAREHOUSE_POSITION;
-    sku.warehouse = {
-      id: warehouseId,
-      name: warehouseName
-    };
-    sku.lockedForReordering = true;
-    sku.lastModified = new Date().toISOString();
+    // Extract warehouse short name from warehouseId (e.g., "WH-Prague" -> "Prague")
+    const warehouseShort = warehouseId.replace('WH-', '');
     
-    this.addAuditLog('system', 'Progressed to Warehouse Assignment', skuId, oldState, SKUState.ASSIGN_WAREHOUSE_POSITION, `Capacity available at ${warehouseName}`);
+    // Check if this warehouse is in the remaining warehouses
+    if (!originalSku.remainingWarehouses?.includes(warehouseShort)) {
+      return false;
+    }
+
+    // Create a new SKU for warehouse assignment
+    const warehouseAssignmentSku: SKU = {
+      id: `${originalSku.id}-${warehouseShort}`,
+      productId: originalSku.productId,
+      productName: originalSku.productName,
+      supplier: originalSku.supplier,
+      state: SKUState.ASSIGN_WAREHOUSE_POSITION,
+      approvedAt: originalSku.approvedAt,
+      approvedBy: originalSku.approvedBy,
+      warehousesToList: [warehouseShort],
+      warehouse: {
+        id: warehouseId,
+        name: warehouseName
+      },
+      lastModified: new Date().toISOString(),
+      lockedForReordering: false
+    };
+
+    // Add the warehouse assignment SKU
+    this.skus.push(warehouseAssignmentSku);
+
+    // Remove this warehouse from the original SKU's remaining warehouses
+    originalSku.remainingWarehouses = originalSku.remainingWarehouses?.filter(w => w !== warehouseShort) || [];
+    originalSku.lastModified = new Date().toISOString();
+
+    // If no warehouses remain, move original SKU to completed state or remove it
+    if (originalSku.remainingWarehouses.length === 0) {
+      originalSku.state = SKUState.CANCELLED; // Mark as processed
+      this.addAuditLog('system', 'All Warehouses Assigned', originalSku.id, SKUState.WAITING_FOR_CAPACITY, SKUState.CANCELLED, 'All warehouses have been assigned');
+    }
+    
+    this.addAuditLog('system', 'Progressed to Warehouse Assignment', warehouseAssignmentSku.id, undefined, SKUState.ASSIGN_WAREHOUSE_POSITION, `Capacity available at ${warehouseName} for ${originalSku.productName}`);
     this.saveToStorage();
     this.notifyListeners();
     return true;

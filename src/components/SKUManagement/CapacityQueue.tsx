@@ -16,8 +16,8 @@ export const CapacityQueue: React.FC = () => {
     loadSKUs();
     const unsubscribe = skuService.subscribe(loadSKUs);
     
-    // Simulate capacity checks every 30 seconds
-    const interval = setInterval(simulateCapacityCheck, 30000);
+    // Simulate capacity checks every 10 seconds
+    const interval = setInterval(simulateCapacityCheck, 10000);
     
     return () => {
       unsubscribe();
@@ -32,18 +32,39 @@ export const CapacityQueue: React.FC = () => {
 
   const simulateCapacityCheck = () => {
     const waitingSKUs = skuService.getSKUs(SKUState.WAITING_FOR_CAPACITY);
-    if (waitingSKUs.length > 0 && Math.random() > 0.7) {
-      // 30% chance of capacity becoming available
-      const nextSKU = waitingSKUs[0];
-      const warehouses = ['Prague Central', 'Brno Distribution', 'Ostrava Hub'];
-      const selectedWarehouse = warehouses[Math.floor(Math.random() * warehouses.length)];
-      
-      skuService.progressToWarehouseAssignment(
-        nextSKU.id,
-        `WH-${selectedWarehouse.replace(' ', '-')}`,
-        selectedWarehouse
-      );
-    }
+    if (waitingSKUs.length === 0) return;
+
+    // Define warehouses and their capacity check probability
+    const warehouses = [
+      { short: 'Prague', full: 'Prague Central', checkProbability: 0.4 },
+      { short: 'Brno', full: 'Brno Distribution', checkProbability: 0.3 },
+      { short: 'Ostrava', full: 'Ostrava Hub', checkProbability: 0.3 }
+    ];
+
+    // Check each warehouse for capacity
+    warehouses.forEach(warehouse => {
+      if (Math.random() < warehouse.checkProbability) {
+        // This warehouse has capacity available
+        
+        // Find SKUs waiting for this specific warehouse
+        const skusForWarehouse = waitingSKUs.filter(sku => 
+          sku.remainingWarehouses && sku.remainingWarehouses.includes(warehouse.short)
+        );
+
+        if (skusForWarehouse.length > 0) {
+          // Take the first SKU in queue for this warehouse
+          const nextSKU = skusForWarehouse[0];
+          
+          console.log(`[Capacity Check] ${warehouse.full} has capacity available for SKU ${nextSKU.id}`);
+          
+          skuService.progressToWarehouseAssignment(
+            nextSKU.id,
+            `WH-${warehouse.short}`,
+            warehouse.full
+          );
+        }
+      }
+    });
   };
 
   const handleDragEnd = (result: DropResult) => {
@@ -150,6 +171,25 @@ export const CapacityQueue: React.FC = () => {
                                 <p className="text-xs text-gray-500">
                                   {sku.supplier} • SKU: {sku.id}
                                 </p>
+                                {sku.remainingWarehouses && sku.remainingWarehouses.length > 0 && (
+                                  <div className="mt-1 flex flex-wrap gap-1">
+                                    {sku.remainingWarehouses.map((warehouse) => (
+                                      <span
+                                        key={warehouse}
+                                        className="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-green-100 text-green-800"
+                                      >
+                                        {warehouse}
+                                      </span>
+                                    ))}
+                                  </div>
+                                )}
+                                {sku.warehousesToList && sku.warehousesToList.length > sku.remainingWarehouses?.length && (
+                                  <div className="mt-1">
+                                    <span className="text-xs text-gray-500">
+                                      {(sku.warehousesToList.length - (sku.remainingWarehouses?.length || 0))} warehouse(s) assigned
+                                    </span>
+                                  </div>
+                                )}
                               </div>
                             </div>
                             
